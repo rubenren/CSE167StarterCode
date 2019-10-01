@@ -10,6 +10,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 #include <string>
 
 #include "Object.h"
@@ -29,6 +32,8 @@ public:
 
 	void updatePointSize(GLfloat size);
 	void spin(float deg);
+    
+    void centerPoints();
 };
 
 #endif

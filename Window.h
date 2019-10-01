@@ -28,6 +28,9 @@ public:
 	static int height;
 	static const char* windowTitle;
 	static Cube* cube;
+    static PointCloud * bunny;
+    static PointCloud * bear;
+    static PointCloud * dragon;
 	static PointCloud * cubePoints;
 	static Object * currentObj;
 	static glm::mat4 projection;

@@ -10,7 +10,10 @@ Cube * Window::cube;
 PointCloud * Window::cubePoints;
 
 // The object currently displaying.
-Object * Window::currentObj; 
+Object * Window::currentObj;
+PointCloud * Window::bunny;
+PointCloud * Window::bear;
+PointCloud * Window::dragon;
 
 glm::mat4 Window::projection; // Projection matrix.
 
@@ -57,6 +60,11 @@ bool Window::initializeObjects()
 	// Create a point cloud consisting of cube vertices.
 	cubePoints = new PointCloud("foo", 100);
 
+    // Creates pointclouds of the OBJ files
+    bunny = new PointCloud("res/bunny.obj", 10);
+    bear = new PointCloud("res/bear.obj", 10);
+    dragon = new PointCloud("res/dragon.obj", 10);
+    
 	// Set cube to be the first to display
 	currentObj = cube;
 
@@ -67,6 +75,9 @@ void Window::cleanUp()
 {
 	// Deallcoate the objects.
 	delete cube;
+    delete bunny;
+    delete dragon;
+    delete bear;
 	delete cubePoints;
 
 	// Delete the shader program.
@@ -186,20 +197,37 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 	{
 		switch (key)
 		{
-		case GLFW_KEY_ESCAPE:
-			// Close the window. This causes the program to also terminate.
-			glfwSetWindowShouldClose(window, GL_TRUE);				
-			break;
-		case GLFW_KEY_1:
-			// Set currentObj to cube
-			currentObj = cube;
-			break;
-		case GLFW_KEY_2:
-			// Set currentObj to cubePoints
-			currentObj = cubePoints;
-			break;
-		default:
-			break;
+            case GLFW_KEY_ESCAPE:
+                // Close the window. This causes the program to also terminate.
+                glfwSetWindowShouldClose(window, GL_TRUE);
+                break;
+            case GLFW_KEY_1:
+                // Set currentObj to cube
+                currentObj = cube;
+                break;
+            case GLFW_KEY_2:
+                // Set currentObj to cubePoints
+                currentObj = cubePoints;
+                break;
+            case GLFW_KEY_F1:
+                currentObj = bunny;
+                break;
+            case GLFW_KEY_F2:
+                currentObj = dragon;
+                break;
+            case GLFW_KEY_F3:
+                currentObj = bear;
+                break;
+            case GLFW_KEY_P:
+                if(mods == GLFW_MOD_SHIFT){
+                    currentObj->updatePointSize(1);
+                }
+                else {
+                    currentObj->updatePointSize(-1);
+                }
+                break;
+            default:
+                break;
 		}
 	}
 }

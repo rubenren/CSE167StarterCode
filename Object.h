@@ -21,6 +21,7 @@ public:
 	glm::vec3 getColor() { return color; }
 
 	virtual void draw() = 0;
+    virtual void updatePointSize(GLfloat size) = 0;
 	virtual void update() = 0;
 };
 

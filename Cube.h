@@ -26,6 +26,7 @@ public:
 	void update();
 
 	void spin(float deg);
+    void updatePointSize(GLfloat size);
 };
 
 #endif
