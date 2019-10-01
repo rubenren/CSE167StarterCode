@@ -134,6 +134,7 @@ void PointCloud::centerPoints(){
     MinMaxes.push_back(points[0].z);
     MinMaxes.push_back(points[0].z);
     */
+    if(points.empty()) return;
     GLfloat xMin = points[0].x;
     GLfloat xMax = points[0].x;
     GLfloat yMin = points[0].y;
