@@ -1,5 +1,7 @@
 #include "PointCloud.h"
 
+#define SCREEN_SCALE 5
+
 PointCloud::PointCloud(std::string objFilename, GLfloat pointSize) 
 	: pointSize(pointSize)
 {
@@ -125,16 +127,57 @@ void PointCloud::spin(float deg)
 }
 
 void PointCloud::centerPoints(){
-    /*
-    std::vector<GLfloat> MinMaxes;
-    MinMaxes.push_back(points[0].x);
-    MinMaxes.push_back(points[0].x);
-    MinMaxes.push_back(points[0].y);
-    MinMaxes.push_back(points[0].y);
-    MinMaxes.push_back(points[0].z);
-    MinMaxes.push_back(points[0].z);
-    */
+    
     if(points.empty()) return;
+    
+    std::vector<GLfloat> MinMaxesMid;
+    MinMaxesMid.push_back(points[0].x);
+    MinMaxesMid.push_back(points[0].x);
+    MinMaxesMid.push_back(points[0].y);
+    MinMaxesMid.push_back(points[0].y);
+    MinMaxesMid.push_back(points[0].z);
+    MinMaxesMid.push_back(points[0].z);
+
+    for(auto point : points){
+        if(point.x < MinMaxesMid.at(0)) MinMaxesMid.at(0) = point.x;
+        if(point.x > MinMaxesMid.at(1)) MinMaxesMid.at(1) = point.x;
+        if(point.y < MinMaxesMid.at(2)) MinMaxesMid.at(2) = point.y;
+        if(point.y > MinMaxesMid.at(3)) MinMaxesMid.at(3) = point.y;
+        if(point.z < MinMaxesMid.at(4)) MinMaxesMid.at(4) = point.z;
+        if(point.z > MinMaxesMid.at(5)) MinMaxesMid.at(5) = point.z;
+    }
+    
+    MinMaxesMid.push_back((MinMaxesMid.at(0) + MinMaxesMid.at(1)) / 2);
+    MinMaxesMid.push_back((MinMaxesMid.at(2) + MinMaxesMid.at(3)) / 2);
+    MinMaxesMid.push_back((MinMaxesMid.at(4) + MinMaxesMid.at(5)) / 2);
+    
+    for(auto & point : points){
+        point.x -= MinMaxesMid.at(6);
+        point.y -= MinMaxesMid.at(7);
+        point.z -= MinMaxesMid.at(8);
+    }
+    for(int i = 0; i < 3; i++){
+        // all of the minimums
+        MinMaxesMid[2 * i] -= MinMaxesMid.at(i + 6);
+        // all of the maximums
+        MinMaxesMid[2 * i + 1] -= MinMaxesMid.at(i + 6);
+        MinMaxesMid[2 * i] *= -1;
+        std::cerr << MinMaxesMid[2*i]  << ", " << MinMaxesMid[2*i+1]<< std::endl;
+    }
+    std::cerr << std::endl;
+    for(auto i : MinMaxesMid){
+        std::cerr <<  i << std::endl;
+    }
+    std::cerr << std::endl << *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4) << std::endl;
+    GLfloat scalar = SCREEN_SCALE / *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4);
+    
+    /* */
+    for(auto & point : points){
+        point *= scalar;
+    }
+    std::cerr << std::endl << scalar << std::endl;
+    /* */
+    /*
     GLfloat xMin = points[0].x;
     GLfloat xMax = points[0].x;
     GLfloat yMin = points[0].y;
@@ -168,7 +211,6 @@ void PointCloud::centerPoints(){
     yMax -= yMid;
     zMin -= zMid;
     zMax -= zMid;
-    
-    GLfloat scalar = 1;
+    */
     
 }
