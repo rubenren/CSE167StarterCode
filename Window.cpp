@@ -14,6 +14,7 @@ Object * Window::currentObj;
 PointCloud * Window::bunny;
 PointCloud * Window::bear;
 PointCloud * Window::dragon;
+PointCloud * Window::transitionPoints;
 
 glm::mat4 Window::projection; // Projection matrix.
 

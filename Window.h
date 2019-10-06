@@ -32,6 +32,7 @@ public:
     static PointCloud * bear;
     static PointCloud * dragon;
 	static PointCloud * cubePoints;
+    static PointCloud * transitionPoints;
 	static Object * currentObj;
 	static glm::mat4 projection;
 	static glm::mat4 view;

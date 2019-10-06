@@ -128,8 +128,9 @@ void PointCloud::spin(float deg)
 
 void PointCloud::centerPoints(){
     
-    if(points.empty()) return;
+    if(points.empty()) return;  // return if there are no points
     
+    // fill it with some values
     std::vector<GLfloat> MinMaxesMid;
     MinMaxesMid.push_back(points[0].x);
     MinMaxesMid.push_back(points[0].x);
@@ -138,6 +139,7 @@ void PointCloud::centerPoints(){
     MinMaxesMid.push_back(points[0].z);
     MinMaxesMid.push_back(points[0].z);
 
+    // grab the absolute max and mins in each axis
     for(auto point : points){
         if(point.x < MinMaxesMid.at(0)) MinMaxesMid.at(0) = point.x;
         if(point.x > MinMaxesMid.at(1)) MinMaxesMid.at(1) = point.x;
@@ -147,36 +149,43 @@ void PointCloud::centerPoints(){
         if(point.z > MinMaxesMid.at(5)) MinMaxesMid.at(5) = point.z;
     }
     
+    // calculate the midpoint (x, y, z)
     MinMaxesMid.push_back((MinMaxesMid.at(0) + MinMaxesMid.at(1)) / 2);
     MinMaxesMid.push_back((MinMaxesMid.at(2) + MinMaxesMid.at(3)) / 2);
     MinMaxesMid.push_back((MinMaxesMid.at(4) + MinMaxesMid.at(5)) / 2);
     
+    // translate the points
     for(auto & point : points){
         point.x -= MinMaxesMid.at(6);
         point.y -= MinMaxesMid.at(7);
         point.z -= MinMaxesMid.at(8);
     }
+    
+    // translate the min and max records for use later, and absolute valueing them
     for(int i = 0; i < 3; i++){
         // all of the minimums
         MinMaxesMid[2 * i] -= MinMaxesMid.at(i + 6);
         // all of the maximums
         MinMaxesMid[2 * i + 1] -= MinMaxesMid.at(i + 6);
         MinMaxesMid[2 * i] *= -1;
-        std::cerr << MinMaxesMid[2*i]  << ", " << MinMaxesMid[2*i+1]<< std::endl;
+        //std::cerr << MinMaxesMid[2*i]  << ", " << MinMaxesMid[2*i+1]<< std::endl;
     }
+    
+    /* *
     std::cerr << std::endl;
     for(auto i : MinMaxesMid){
         std::cerr <<  i << std::endl;
     }
     std::cerr << std::endl << *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4) << std::endl;
+    /* */
+    
+    // calculate the scalar per the max point
     GLfloat scalar = SCREEN_SCALE / *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4);
     
-    /* */
+    // multiply all of the vectors by the calculated scalar
     for(auto & point : points){
         point *= scalar;
     }
-    std::cerr << std::endl << scalar << std::endl;
-    /* */
     /*
     GLfloat xMin = points[0].x;
     GLfloat xMax = points[0].x;
