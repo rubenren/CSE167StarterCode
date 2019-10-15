@@ -14,6 +14,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include "Object.h"
 

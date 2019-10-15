@@ -62,9 +62,9 @@ bool Window::initializeObjects()
 	cubePoints = new PointCloud("foo", 100);
 
     // Creates pointclouds of the OBJ files
-    bunny = new PointCloud("res/bunny.obj", 10);
-    bear = new PointCloud("res/bear.obj", 10);
-    dragon = new PointCloud("res/dragon.obj", 10);
+    bunny = new PointCloud(".\\res\\bunny.obj", 10);
+    bear = new PointCloud(".\\res\\bear.obj", 10);
+    dragon = new PointCloud(".\\res\\dragon.obj", 10);
     
 	// Set cube to be the first to display
 	currentObj = cube;
