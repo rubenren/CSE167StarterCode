@@ -20,6 +20,7 @@ glm::mat4 Window::projection; // Projection matrix.
 int Window::activeMvmnt = 0;
 glm::vec3 Window::lastPoint = glm::vec3(0,0,0);
 #define ROT_SCALE 200
+#define SCALE_SCALE .01
 
 glm::vec3 Window::eye(0, 0, 20); // Camera position.
 glm::vec3 Window::center(0, 0, 0); // The point we are looking at.
@@ -77,6 +78,25 @@ bool Window::initializeObjects()
     
 	// Set cube to be the first to display
 	currentObj = cube;
+    glUniform1i(glGetUniformLocation(program, "matType"), 0);
+    
+    // bunny material options
+    bunny->ambience = glm::vec3(.01, .01, .01);
+    bunny->diffuse = glm::vec3(0.07568, 0.61424, 0.07568);
+    bunny->specular = glm::vec3(0.633, 0.727811, 0.633);
+    bunny->shininess = 0;
+    
+    // dragon material options
+    dragon->ambience = glm::vec3(.01, .01, .01);
+    dragon->diffuse = glm::vec3(0.8, 0.8, 0.8);
+    dragon->specular = glm::vec3(0.8, 0.8, 0.8);
+    dragon->shininess = .8;
+    
+    // bear material options
+    bear->ambience = glm::vec3(.01, .01, .01);
+    bear->diffuse = glm::vec3(0.0, 0.0, 0.0);
+    bear->specular = glm::vec3(0.8, 0.8, 0.8);
+    bear->shininess = .8;
 
 	return true;
 }
@@ -181,7 +201,10 @@ void Window::idleCallback()
 void Window::displayCallback(GLFWwindow* window)
 {	
 	// Clear the color and depth buffers.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    glm::vec3 lightPosition = glm::vec3(5.0, 5.0, 5.0);
+    glm::vec3 lightColor = glm::vec3(0.05,0.02,.8);
 
 	// Specify the values of the uniform variables we are going to use.
 	glm::mat4 model = currentObj->getModel();
@@ -190,7 +213,30 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(color));
+    glUniform3f(glGetUniformLocation(program, "pointLights[0].position"), lightPosition.x, lightPosition.y, lightPosition.z);
+    glUniform3f(glGetUniformLocation(program, "pointLights[0].color"), lightColor.x,  lightColor.y,  lightColor.z);
+    glUniform1f(glGetUniformLocation(program, "pointLights[0].constant"), 1.0f);
+    glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), 0.09);
+    glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), 0.01);
     
+    // populating materials
+    std::vector<PointCloud *> temp;
+    temp.push_back(bunny);
+    temp.push_back(dragon);
+    temp.push_back(bear);
+    
+    std::string holder = "";
+
+    for(int i = 0; i < temp.size(); i++){
+        holder = "material[" + std::to_string(i) + "].ambient";
+        glUniform3f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->ambience.x, temp.at(i)->ambience.y, temp.at(i)->ambience.z);
+        holder = "material[" + std::to_string(i) + "].diffuse";
+        glUniform3f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->diffuse.x, temp.at(i)->diffuse.y, temp.at(i)->diffuse.z);
+        holder = "material[" + std::to_string(i) + "].specular";
+        glUniform3f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->specular.x, temp.at(i)->specular.y, temp.at(i)->specular.z);
+        holder = "material[" + std::to_string(i) + "].shininess";
+        glUniform1f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->shininess);
+    }
     glCheckError();
     
 	// Render the object.
@@ -211,6 +257,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 	 */
 	
 	// Check for a key press.
+    bool temp = true;
 	if (action == GLFW_PRESS)
 	{
 		switch (key)
@@ -229,12 +276,15 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                 break;
             case GLFW_KEY_F1:
                 currentObj = bunny;
+                glUniform1i(glGetUniformLocation(program, "matType"), 0);
                 break;
             case GLFW_KEY_F2:
                 currentObj = dragon;
+                glUniform1i(glGetUniformLocation(program, "matType"), 1);
                 break;
             case GLFW_KEY_F3:
                 currentObj = bear;
+                glUniform1i(glGetUniformLocation(program, "matType"), 2);
                 break;
             case GLFW_KEY_P:
                 if(mods == GLFW_MOD_SHIFT){
@@ -244,6 +294,15 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                     currentObj->updatePointSize(-1);
                 }
                 break;
+            case GLFW_KEY_N:
+                if(temp){
+                    glUniform1i(glGetUniformLocation(program, "normalColoring"), 1);
+                    temp = false;
+                }
+                else{
+                    glUniform1i(glGetUniformLocation(program, "normalColoring"), 0);
+                    temp = true;
+                }
             default:
                 break;
 		}
@@ -282,11 +341,13 @@ void Window::cursorCallback(GLFWwindow* window, double x, double y){
             rotAxis = glm::cross(lastPoint, curPoint);
             rotAngle = velocity * ROT_SCALE;
             rotAxis = glm::normalize(rotAxis);
+            /**
             std::cout << rotAngle
                 << "\t(" << rotAxis.x
                 << ", " << rotAxis.y
                 << ", " << rotAxis.z
                 << ")\n";
+            */
             // ensure that the cross product will not be zero
             if(rotAxis.length() != 0)
                 currentObj->spin(rotAngle, rotAxis);
@@ -305,4 +366,9 @@ void Window::mouseCallback(GLFWwindow *window, int button, int action, int mods)
     else if(action != GLFW_PRESS){
         activeMvmnt = 0;
     }
+}
+
+void Window::scrollCallback(GLFWwindow *window, double xOffset, double yOffset){
+    if(yOffset > 0.001)
+        currentObj->scale(yOffset * SCALE_SCALE);
 }

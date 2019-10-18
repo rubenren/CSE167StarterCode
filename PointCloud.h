@@ -29,6 +29,11 @@ private:
     GLuint vbos[2];
 	GLfloat pointSize;
 public:
+    glm::vec3 ambience;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    GLfloat shininess;
+    
 	PointCloud(std::string objFilename, GLfloat pointSize);
 	~PointCloud();
 
@@ -39,6 +44,7 @@ public:
 	void spin(float deg, glm::vec3 rotAxis);
     
     void centerVertices(std::vector<glm::vec3>&);
+    void scale(GLfloat factor);
 };
 
 #endif

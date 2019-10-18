@@ -256,6 +256,11 @@ void PointCloud::centerVertices(std::vector<glm::vec3> & toCenter){
     /**/
 }
 
+
+void PointCloud::scale(GLfloat factor){
+    model = glm::scale(model, glm::vec3(factor, factor, factor));
+}
+
 void printGLError(const char* msg){
     const GLenum err = glGetError();
     if(err != GL_NO_ERROR){

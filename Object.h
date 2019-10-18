@@ -24,6 +24,7 @@ public:
     virtual void updatePointSize(GLfloat size) = 0;
 	virtual void update() = 0;
     virtual void spin(float deg, glm::vec3 rotAxis) = 0;
+    virtual void scale(GLfloat factor) = 0;
 };
 
 #endif

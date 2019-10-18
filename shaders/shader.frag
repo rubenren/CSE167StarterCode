@@ -2,8 +2,9 @@
 // This is a sample fragment shader.
 
 struct Material {
-    sampler2D diffuse;
-    sampler2D specular;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
     float shininess;
 };
 
@@ -12,13 +13,13 @@ struct PointLight {
     
     float constant;
     float linear;
+    float quadratic;
     
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3 color;
 };
 
 #define NR_POINT_LIGHTS 1
+#define NR_MATERIALS 3
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
@@ -30,7 +31,9 @@ in vec3 posOutput;
 
 uniform vec3 color;
 uniform vec3 viewPos;
-uniform Material material;
+uniform int matType;
+uniform bool normalColoring;
+uniform Material material[NR_MATERIALS];
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 // You can output many things. The first vec4 type output determines the color of the fragment
@@ -40,32 +43,43 @@ void main()
 {
     
     vec3 norm = normalize(normalOutput);
+    vec3 normColor = (norm + vec3(1,1,1)) / 2;
     vec3 viewDir = normalize(viewPos - posOutput);
     
+    vec3 result = vec3(0,0,0);
+    
+    // Point lights calculations
+    if(!normalColoring)
+        for(int i = 0; i < NR_POINT_LIGHTS; i++)
+            result += CalcPointLight(pointLights[i], norm, posOutput, viewDir);
+    else
+        result = normColor;
     // Use the color passed in. An alpha of 1.0f means it is not transparent.
-    fragColor = vec4(color, sampleExtraOutput);
+    fragColor = vec4(result, sampleExtraOutput);//sampleExtraOutput);
 }
 
 // Calculates the color when using the point light
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
     vec3 lightDir = normalize(light.position - fragPos);
     
+    float ambInt = .1f;
+    
     // Diffuse shading
     float diffu = max(dot(normal, lightDir), 0.0);
     // Specular shading
     vec3 rflctDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, rflctDir), 0.0), material.shininess);
+    float spec = pow(max(dot(viewDir, rflctDir), 0.0), material[matType].shininess);
     // Attenuation
-    float distance = length(light.position - fragPosition);
-    float attenuation = 1.0f / (distance * light.linear);
+    float dist = length(light.position - fragPos);
+    float attenuation = 1.0f / (dist * dist * light.quadratic);
     
     // Combine things
-    vec3 ambient = light.ambient * material.diffuse;
-    vec3 diffuse = light.diffuse * diffu * material.diffuse;
-    vec3 specular = light.specular * spec * material.specular;
+    vec3 ambient = ambInt * material[matType].ambient;
+    vec3 diffuse = material[matType].diffuse * diffu;
+    vec3 specular = material[matType].specular * spec;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
     vec3 result = ambient + diffuse + specular;
-    return result
+    return result * light.color;
 }
