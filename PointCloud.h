@@ -45,6 +45,7 @@ public:
     
     void centerVertices(std::vector<glm::vec3>&);
     void scale(GLfloat factor);
+    void translate(glm::vec3 direction);
 };
 
 #endif

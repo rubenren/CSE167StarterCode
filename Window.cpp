@@ -13,14 +13,17 @@ Object * Window::currentObj;
 PointCloud * Window::bunny;
 PointCloud * Window::bear;
 PointCloud * Window::dragon;
-PointCloud * Window::transitionPoints;
+PointCloud * Window::lightSphere;
 
 glm::mat4 Window::projection; // Projection matrix.
 
 int Window::activeMvmnt = 0;
 glm::vec3 Window::lastPoint = glm::vec3(0,0,0);
 #define ROT_SCALE 200
-#define SCALE_SCALE .01
+#define SCALE_SCALE -.01
+
+glm::vec3 lightPosition = glm::vec3(5.0, 5.0, 5.0);
+glm::vec3 lightColor = glm::vec3(0.05,0.02,.8);
 
 glm::vec3 Window::eye(0, 0, 20); // Camera position.
 glm::vec3 Window::center(0, 0, 0); // The point we are looking at.
@@ -30,6 +33,7 @@ glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
 glm::mat4 Window::view = glm::lookAt(Window::eye, Window::center, Window::up);
 
 GLuint Window::program; // The shader program id.
+GLuint Window::lampS; // The lamps shader id.
 
 GLuint Window::projectionLoc; // Location of projection in shader.
 GLuint Window::viewLoc; // Location of view in shader.
@@ -39,6 +43,7 @@ GLuint Window::colorLoc; // Location of color in shader.
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
+    
 
 	// Check the shader program.
 	if (!program)
@@ -70,10 +75,12 @@ bool Window::initializeObjects()
     bunny = new PointCloud("res/bunny.obj", 10);
     bear = new PointCloud("res/bear.obj", 10);
     dragon = new PointCloud("res/dragon.obj", 10);
+    lightSphere = new PointCloud("res/sphere.obj", 10);
     #else
     bunny = new PointCloud(".\\res\\bunny.obj", 10);
     bear = new PointCloud(".\\res\\bear.obj", 10);
     dragon = new PointCloud(".\\res\\dragon.obj", 10);
+    lightSphere = new PointCloud(".\\res\\sphere.obj", 10);
     #endif
     
 	// Set cube to be the first to display
@@ -97,6 +104,11 @@ bool Window::initializeObjects()
     bear->diffuse = glm::vec3(0.0, 0.0, 0.0);
     bear->specular = glm::vec3(0.8, 0.8, 0.8);
     bear->shininess = .8;
+    
+    // lamp material options
+    lightSphere->ambience = lightColor;
+    lightSphere->diffuse = glm::vec3(0.0, 0.0, 0.0);
+    lightSphere->specular = glm::vec3(0.0, 0.0, 0.0);
 
 	return true;
 }
@@ -203,8 +215,6 @@ void Window::displayCallback(GLFWwindow* window)
 	// Clear the color and depth buffers.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    glm::vec3 lightPosition = glm::vec3(5.0, 5.0, 5.0);
-    glm::vec3 lightColor = glm::vec3(0.05,0.02,.8);
 
 	// Specify the values of the uniform variables we are going to use.
 	glm::mat4 model = currentObj->getModel();
@@ -241,6 +251,7 @@ void Window::displayCallback(GLFWwindow* window)
     
 	// Render the object.
 	currentObj->draw();
+//    lightSphere->draw();
     
     glCheckError();
     
@@ -303,6 +314,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                     glUniform1i(glGetUniformLocation(program, "normalColoring"), 0);
                     temp = true;
                 }
+                break;
             default:
                 break;
 		}
@@ -369,6 +381,5 @@ void Window::mouseCallback(GLFWwindow *window, int button, int action, int mods)
 }
 
 void Window::scrollCallback(GLFWwindow *window, double xOffset, double yOffset){
-    if(yOffset > 0.001)
-        currentObj->scale(yOffset * SCALE_SCALE);
+    currentObj->scale(yOffset * SCALE_SCALE);
 }

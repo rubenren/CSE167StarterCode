@@ -55,7 +55,7 @@ void main()
     else
         result = normColor;
     // Use the color passed in. An alpha of 1.0f means it is not transparent.
-    fragColor = vec4(result, sampleExtraOutput);//sampleExtraOutput);
+    fragColor = vec4(result, sampleExtraOutput);
 }
 
 // Calculates the color when using the point light

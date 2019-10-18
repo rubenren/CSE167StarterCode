@@ -33,14 +33,14 @@ public:
     static PointCloud * bear;
     static PointCloud * dragon;
 	static PointCloud * cubePoints;
-    static PointCloud * transitionPoints;
+    static PointCloud * lightSphere;
 	static Object * currentObj;
     static int activeMvmnt;
     static glm::vec3 lastPoint;
 	static glm::mat4 projection;
 	static glm::mat4 view;
 	static glm::vec3 eye, center, up;
-	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc;
+	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc, lampS;
 
 	static bool initializeProgram();
 	static bool initializeObjects();

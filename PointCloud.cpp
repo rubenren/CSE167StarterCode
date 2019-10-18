@@ -10,19 +10,6 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
 	 * TODO: Section 2: Currently, all the points are hard coded below. 
 	 * Modify this to read points from an obj file.
 	 */
-    /*
-	points = 
-	{
-		glm::vec3(-2.5, 2.5, 2.5),
-		glm::vec3(-2.5, -2.5, 2.5),
-		glm::vec3(2.5, -2.5, 2.5),
-		glm::vec3(2.5, 2.5, 2.5),
-		glm::vec3(-2.5, 2.5, -2.5),
-		glm::vec3(-2.5, -2.5, -2.5),
-		glm::vec3(2.5, -2.5, -2.5),
-		glm::vec3(2.5, 2.5, -2.5)
-	};
-     */
     
     std::ifstream objFile(objFilename);
     
@@ -85,7 +72,6 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
 	// Set the color. 
 	color = glm::vec3(1, 0, 0);
 
-    
     
 	// Generate a vertex array (VAO) and a vertex buffer objects (VBO).
 	glGenVertexArrays(1, &vao);
@@ -258,7 +244,12 @@ void PointCloud::centerVertices(std::vector<glm::vec3> & toCenter){
 
 
 void PointCloud::scale(GLfloat factor){
+    factor += 1;
     model = glm::scale(model, glm::vec3(factor, factor, factor));
+}
+
+void PointCloud::translate(glm::vec3 direction){
+    model = glm::translate(model, direction);
 }
 
 void printGLError(const char* msg){

@@ -29,6 +29,7 @@ public:
     void spin(float deg, glm::vec3 rotAxis);
     void updatePointSize(GLfloat size);
     void scale(GLfloat factor);
+    void translate(glm::vec3 direction);
     
 };
 

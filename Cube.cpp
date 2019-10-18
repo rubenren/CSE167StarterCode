@@ -120,3 +120,4 @@ void Cube::spin(float deg, glm::vec3 rotAxis){}
 
 void Cube::updatePointSize(GLfloat size){}
 void Cube::scale(GLfloat factor){}
+void Cube::translate(glm::vec3 direction){}
