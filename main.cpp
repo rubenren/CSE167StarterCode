@@ -1,5 +1,6 @@
 #include "main.h"
 
+
 void error_callback(int error, const char* description)
 {
 	// Print error.
@@ -14,6 +15,10 @@ void setup_callbacks(GLFWwindow* window)
 	glfwSetKeyCallback(window, Window::keyCallback);
 	// Set the window resize callback.
 	glfwSetWindowSizeCallback(window, Window::resizeCallback);
+    // Set the cursor position callback
+    glfwSetCursorPosCallback(window, Window::cursorCallback);
+    //Set the mouse callback
+    glfwSetMouseButtonCallback(window, Window::mouseCallback);
 }
 
 void setup_opengl_settings()
@@ -44,9 +49,15 @@ void print_versions()
 
 int main(void)
 {
+
+
+    
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    
 	// Create the GLFW window.
 	GLFWwindow* window = Window::createWindow(640, 480);
 	if (!window) exit(EXIT_FAILURE);
+    
 
 	// Print OpenGL and GLSL versions.
 	print_versions();
@@ -59,6 +70,8 @@ int main(void)
 	// Initialize objects/pointers for rendering; exit if initialization fails.
 	if (!Window::initializeObjects()) exit(EXIT_FAILURE);
 	
+    glCheckError();
+    
 	// Loop while GLFW window should stay open.
 	while (!glfwWindowShouldClose(window))
 	{
@@ -67,6 +80,7 @@ int main(void)
 
 		// Idle callback. Updating objects, etc. can be done here.
 		Window::idleCallback();
+        
 	}
 
 	Window::cleanUp();
@@ -77,3 +91,4 @@ int main(void)
 
 	exit(EXIT_SUCCESS);
 }
+

@@ -2,6 +2,7 @@
 
 #define SCREEN_SCALE 5
 
+
 PointCloud::PointCloud(std::string objFilename, GLfloat pointSize) 
 	: pointSize(pointSize)
 {
@@ -27,7 +28,10 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
     
     if(objFile.is_open()){
         std::string lineAtATime;
-        
+        std::string temp;
+        points.push_back(glm::vec3(0,0,0));
+        norms.push_back(glm::vec3(0,0,0));
+        faceIs.push_back(glm::ivec3(0,0,0));
         while(std::getline(objFile, lineAtATime)){
             std::stringstream ss;
             ss << lineAtATime;
@@ -41,8 +45,27 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
                 
                 points.push_back(point);
             }
+            else if(label == "vn"){
+                glm::vec3 norm;
+                ss >> norm.x >> norm.y >> norm.z;
+                glm::normalize(norm);
+                norms.push_back(norm);
+            }
+            else if(label == "f"){
+                glm::ivec3 idx;
+                
+                ss >> temp;
+                idx.x = stoi(temp.substr(0,temp.find("/")));
+                ss >> temp;
+                idx.y = stoi(temp.substr(0,temp.find("/")));
+                ss >> temp;
+                idx.z = stoi(temp.substr(0,temp.find("/")));
+                faceIs.push_back(idx);
+            }
             
         }
+        
+        std::cout << faceIs.size() << std::endl << faceIs[0].x << " " << faceIs[0].y << " " << faceIs[0].z << std::endl;
     }
     else{
         std::cerr << "Can't open the file " << objFilename << std::endl;
@@ -55,45 +78,87 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
 	 * screen. 
 	 */
     
-    centerPoints();
+    centerVertices(points);
 
 	// Set the model matrix to an identity matrix. 
 	model = glm::mat4(1);
 	// Set the color. 
 	color = glm::vec3(1, 0, 0);
 
+    
+    
 	// Generate a vertex array (VAO) and a vertex buffer objects (VBO).
 	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-
+	glGenBuffers(2, vbos);
+    
+    glCheckError();
+    
 	// Bind to the VAO.
 	glBindVertexArray(vao);
-
+    
+    glCheckError();
+    
 	// Bind to the first VBO. We will use it to store the points.
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
 	// Pass in the data.
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * points.size(),
-		points.data(), GL_STATIC_DRAW);
+		&points[0], GL_STATIC_DRAW);
 	// Enable vertex attribute 0. 
 	// We will be able to access points through it.
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
-
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+    
+    // Bind to the second vbo, storing normals
+    glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
+    // Pass in the data
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * norms.size(),
+        &norms[0], GL_STATIC_DRAW);
+    // Enable vertex attribute 0.
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+    
+    glCheckError();
+    
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glm::ivec3) * faceIs.size(), faceIs.data(), GL_STATIC_DRAW);
+    
+    glCheckError();
+    
 	// Unbind from the VBO.
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	// Unbind from the VAO.
 	glBindVertexArray(0);
+    
+    glCheckError();
+    
+    
+    
 }
 
 PointCloud::~PointCloud() 
 {
 	// Delete the VBO and the VAO.
-	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(2, vbos);
 	glDeleteVertexArrays(1, &vao);
 }
 
 void PointCloud::draw()
 {
+ 
+    glBindVertexArray(vao);
+    
+    glCheckError();
+    
+    glDrawElements(GL_TRIANGLES, 3 * faceIs.size(), GL_UNSIGNED_INT, 0);
+    
+    glCheckError();
+    
+    glBindVertexArray(0);
+    
+    glCheckError();
+    
+    /**
 	// Bind to the VAO.
 	glBindVertexArray(vao);
 	// Set point size.
@@ -102,12 +167,13 @@ void PointCloud::draw()
 	glDrawArrays(GL_POINTS, 0, points.size());
 	// Unbind from the VAO.
 	glBindVertexArray(0);
+    /**/
 }
 
 void PointCloud::update()
 {
 	// Spin the cube by 1 degree.
-	spin(0.1f);
+	// spin(0.1f);
 }
 
 void PointCloud::updatePointSize(GLfloat size) 
@@ -120,33 +186,34 @@ void PointCloud::updatePointSize(GLfloat size)
 	 */
 }
 
-void PointCloud::spin(float deg)
+void PointCloud::spin(float deg, glm::vec3 rotAxis)
 {
 	// Update the model matrix by multiplying a rotation matrix
-	model = glm::rotate(model, glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(glm::radians(deg), rotAxis) * model;
+    
 }
 
-void PointCloud::centerPoints(){
+void PointCloud::centerVertices(std::vector<glm::vec3> & toCenter){
     
-    if(points.empty()) return;  // return if there are no points
+    if(toCenter.empty()) return;  // return if there are no points
     
     // fill it with some values
     std::vector<GLfloat> MinMaxesMid;
-    MinMaxesMid.push_back(points[0].x);
-    MinMaxesMid.push_back(points[0].x);
-    MinMaxesMid.push_back(points[0].y);
-    MinMaxesMid.push_back(points[0].y);
-    MinMaxesMid.push_back(points[0].z);
-    MinMaxesMid.push_back(points[0].z);
+    MinMaxesMid.push_back(toCenter[0].x);
+    MinMaxesMid.push_back(toCenter[0].x);
+    MinMaxesMid.push_back(toCenter[0].y);
+    MinMaxesMid.push_back(toCenter[0].y);
+    MinMaxesMid.push_back(toCenter[0].z);
+    MinMaxesMid.push_back(toCenter[0].z);
 
     // grab the absolute max and mins in each axis
-    for(auto point : points){
-        if(point.x < MinMaxesMid.at(0)) MinMaxesMid.at(0) = point.x;
-        if(point.x > MinMaxesMid.at(1)) MinMaxesMid.at(1) = point.x;
-        if(point.y < MinMaxesMid.at(2)) MinMaxesMid.at(2) = point.y;
-        if(point.y > MinMaxesMid.at(3)) MinMaxesMid.at(3) = point.y;
-        if(point.z < MinMaxesMid.at(4)) MinMaxesMid.at(4) = point.z;
-        if(point.z > MinMaxesMid.at(5)) MinMaxesMid.at(5) = point.z;
+    for(auto vertice : toCenter){
+        if(vertice.x < MinMaxesMid.at(0)) MinMaxesMid.at(0) = vertice.x;
+        if(vertice.x > MinMaxesMid.at(1)) MinMaxesMid.at(1) = vertice.x;
+        if(vertice.y < MinMaxesMid.at(2)) MinMaxesMid.at(2) = vertice.y;
+        if(vertice.y > MinMaxesMid.at(3)) MinMaxesMid.at(3) = vertice.y;
+        if(vertice.z < MinMaxesMid.at(4)) MinMaxesMid.at(4) = vertice.z;
+        if(vertice.z > MinMaxesMid.at(5)) MinMaxesMid.at(5) = vertice.z;
     }
     
     // calculate the midpoint (x, y, z)
@@ -155,10 +222,10 @@ void PointCloud::centerPoints(){
     MinMaxesMid.push_back((MinMaxesMid.at(4) + MinMaxesMid.at(5)) / 2);
     
     // translate the points
-    for(auto & point : points){
-        point.x -= MinMaxesMid.at(6);
-        point.y -= MinMaxesMid.at(7);
-        point.z -= MinMaxesMid.at(8);
+    for(auto & vertice : toCenter){
+        vertice.x -= MinMaxesMid.at(6);
+        vertice.y -= MinMaxesMid.at(7);
+        vertice.z -= MinMaxesMid.at(8);
     }
     
     // translate the min and max records for use later, and absolute valueing them
@@ -183,43 +250,16 @@ void PointCloud::centerPoints(){
     GLfloat scalar = SCREEN_SCALE / *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4);
     
     // multiply all of the vectors by the calculated scalar
-    for(auto & point : points){
-        point *= scalar;
+    for(auto & vertice : toCenter){
+        vertice *= scalar;
     }
-    /*
-    GLfloat xMin = points[0].x;
-    GLfloat xMax = points[0].x;
-    GLfloat yMin = points[0].y;
-    GLfloat yMax = points[0].y;
-    GLfloat zMin = points[0].z;
-    GLfloat zMax = points[0].z;
-    for(auto point : points){
-        if(point.x < xMin) xMin = point.x;
-        if(point.x > xMax) xMax = point.x;
-        if(point.y < yMin) yMin = point.y;
-        if(point.y > yMax) yMax = point.y;
-        if(point.z < zMin) zMin = point.z;
-        if(point.z > zMax) zMax = point.z;
-    }
-    
-    GLfloat xMid = (xMin + xMax) / 2;
-    GLfloat yMid = (yMin + yMax) / 2;
-    GLfloat zMid = (zMin + zMax) / 2;
-    glm::vec3 midPoint = glm::vec3(xMid, yMid, zMid);
-    
-    for(auto & point : points){
-        point.x -= xMid;
-        point.y -= yMid;
-        point.z -= zMid;
-    }
-    
-    // adjust the mins and maxes to match the center
-    xMin -= xMid;
-    xMax -= xMid;
-    yMin -= yMid;
-    yMax -= yMid;
-    zMin -= zMid;
-    zMax -= zMid;
-    */
-    
+    /**/
 }
+
+void printGLError(const char* msg){
+    const GLenum err = glGetError();
+    if(err != GL_NO_ERROR){
+        std::cerr << "OpenGL error: " << msg << ", " << err << std::endl;
+    }
+}
+

@@ -8,6 +8,8 @@
 #include <GL/glew.h>
 #endif
 #include <GLFW/glfw3.h>
+#include <OpenGL/gl3ext.h>
+
 
 #include <stdlib.h>
 #include <stdio.h>

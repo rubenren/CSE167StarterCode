@@ -23,6 +23,7 @@ public:
 	virtual void draw() = 0;
     virtual void updatePointSize(GLfloat size) = 0;
 	virtual void update() = 0;
+    virtual void spin(float deg, glm::vec3 rotAxis) = 0;
 };
 
 #endif

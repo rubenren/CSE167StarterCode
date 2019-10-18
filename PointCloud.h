@@ -17,12 +17,16 @@
 #include <algorithm>
 
 #include "Object.h"
+#include "debugger.hpp"
 
 class PointCloud : public Object
 {
 private:
 	std::vector<glm::vec3> points;
-	GLuint vao, vbo;
+    std::vector<glm::vec3> norms;
+    std::vector<glm::ivec3> faceIs;
+	GLuint vao, ebo;
+    GLuint vbos[2];
 	GLfloat pointSize;
 public:
 	PointCloud(std::string objFilename, GLfloat pointSize);
@@ -32,9 +36,9 @@ public:
 	void update();
 
 	void updatePointSize(GLfloat size);
-	void spin(float deg);
+	void spin(float deg, glm::vec3 rotAxis);
     
-    void centerPoints();
+    void centerVertices(std::vector<glm::vec3>&);
 };
 
 #endif

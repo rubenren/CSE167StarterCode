@@ -1,3 +1,4 @@
+#pragma once
 #ifndef _WINDOW_H_
 #define _WINDOW_H_
 
@@ -34,6 +35,8 @@ public:
 	static PointCloud * cubePoints;
     static PointCloud * transitionPoints;
 	static Object * currentObj;
+    static int activeMvmnt;
+    static glm::vec3 lastPoint;
 	static glm::mat4 projection;
 	static glm::mat4 view;
 	static glm::vec3 eye, center, up;
@@ -43,10 +46,14 @@ public:
 	static bool initializeObjects();
 	static void cleanUp();
 	static GLFWwindow* createWindow(int width, int height);
+    static glm::vec3 trackBallMapping(glm::vec2 point);
 	static void resizeCallback(GLFWwindow* window, int width, int height);
 	static void idleCallback();
 	static void displayCallback(GLFWwindow*);
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void cursorCallback(GLFWwindow* window, double x, double y);
+    static void mouseCallback(GLFWwindow* window, int button, int action, int mods);
 };
 
 #endif
+

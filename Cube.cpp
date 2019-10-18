@@ -116,4 +116,6 @@ void Cube::spin(float deg)
 	model = glm::rotate(model, glm::radians(deg), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+void Cube::spin(float deg, glm::vec3 rotAxis){}
+
 void Cube::updatePointSize(GLfloat size){}

@@ -1,5 +1,4 @@
 #include "Window.h"
-
 int Window::width;
 int Window::height;
 
@@ -17,6 +16,10 @@ PointCloud * Window::dragon;
 PointCloud * Window::transitionPoints;
 
 glm::mat4 Window::projection; // Projection matrix.
+
+int Window::activeMvmnt = 0;
+glm::vec3 Window::lastPoint = glm::vec3(0,0,0);
+#define ROT_SCALE 200
 
 glm::vec3 Window::eye(0, 0, 20); // Camera position.
 glm::vec3 Window::center(0, 0, 0); // The point we are looking at.
@@ -62,9 +65,15 @@ bool Window::initializeObjects()
 	cubePoints = new PointCloud("foo", 100);
 
     // Creates pointclouds of the OBJ files
+    #ifdef __APPLE__
+    bunny = new PointCloud("res/bunny.obj", 10);
+    bear = new PointCloud("res/bear.obj", 10);
+    dragon = new PointCloud("res/dragon.obj", 10);
+    #else
     bunny = new PointCloud(".\\res\\bunny.obj", 10);
     bear = new PointCloud(".\\res\\bear.obj", 10);
     dragon = new PointCloud(".\\res\\dragon.obj", 10);
+    #endif
     
 	// Set cube to be the first to display
 	currentObj = cube;
@@ -80,6 +89,10 @@ void Window::cleanUp()
     delete dragon;
     delete bear;
 	delete cubePoints;
+    
+    
+    glCheckError();
+    
 
 	// Delete the shader program.
 	glDeleteProgram(program);
@@ -177,10 +190,14 @@ void Window::displayCallback(GLFWwindow* window)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 	glUniform3fv(colorLoc, 1, glm::value_ptr(color));
-
+    
+    glCheckError();
+    
 	// Render the object.
 	currentObj->draw();
-
+    
+    glCheckError();
+    
 	// Gets events, including input such as keyboard and mouse or window resizing.
 	glfwPollEvents();
 	// Swap buffers.
@@ -231,4 +248,61 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                 break;
 		}
 	}
+}
+
+glm::vec3 Window::trackBallMapping(glm::vec2 point){
+    glm::vec3 v;
+    float d;
+    
+    v.x = (2.0f * point.x - width) / width;
+    v.y = (height - 2.0f * point.y) / height;
+    v.z = 0;
+    
+    d = glm::length(v);
+    
+    d = (d < 1.0f) ? d : 1.0f;
+    v.z = sqrtf(1.001f - d*d);
+    
+    v = glm::normalize(v);
+    return v;
+}
+
+void Window::cursorCallback(GLFWwindow* window, double x, double y){
+    glm::vec3 curPoint;
+    glm::vec3 direction;
+    glm::vec3 rotAxis;
+    glm::mat4 trans = glm::mat4(1.0f);
+    GLfloat rotAngle;
+    curPoint = trackBallMapping(glm::vec2(x,y));
+    
+    if(activeMvmnt){
+        direction = curPoint - lastPoint;
+        float velocity = glm::length(direction);
+        if(velocity > .001){
+            rotAxis = glm::cross(lastPoint, curPoint);
+            rotAngle = velocity * ROT_SCALE;
+            rotAxis = glm::normalize(rotAxis);
+            std::cout << rotAngle
+                << "\t(" << rotAxis.x
+                << ", " << rotAxis.y
+                << ", " << rotAxis.z
+                << ")\n";
+            // ensure that the cross product will not be zero
+            if(rotAxis.length() != 0)
+                currentObj->spin(rotAngle, rotAxis);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
+            
+        }
+    }
+    
+    lastPoint = curPoint;
+}
+
+void Window::mouseCallback(GLFWwindow *window, int button, int action, int mods){
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS){
+        activeMvmnt = 1;
+    }
+    else if(action != GLFW_PRESS){
+        activeMvmnt = 0;
+    }
 }
