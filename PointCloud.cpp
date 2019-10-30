@@ -52,7 +52,7 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
             
         }
         
-        std::cout << faceIs.size() << std::endl << faceIs[0].x << " " << faceIs[0].y << " " << faceIs[0].z << std::endl;
+//        std::cout << faceIs.size() << std::endl << faceIs[0].x << " " << faceIs[0].y << " " << faceIs[0].z << std::endl;
     }
     else{
         std::cerr << "Can't open the file " << objFilename << std::endl;
@@ -99,7 +99,7 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
     // Pass in the data
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * norms.size(),
         &norms[0], GL_STATIC_DRAW);
-    // Enable vertex attribute 0.
+    // Enable vertex attribute 1.
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
     
@@ -136,7 +136,7 @@ void PointCloud::draw()
     
     glCheckError();
     
-    glDrawElements(GL_TRIANGLES, 3 * faceIs.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6 * faceIs.size(), GL_UNSIGNED_INT, 0);
     
     glCheckError();
     
@@ -221,16 +221,8 @@ void PointCloud::centerVertices(std::vector<glm::vec3> & toCenter){
         // all of the maximums
         MinMaxesMid[2 * i + 1] -= MinMaxesMid.at(i + 6);
         MinMaxesMid[2 * i] *= -1;
-        //std::cerr << MinMaxesMid[2*i]  << ", " << MinMaxesMid[2*i+1]<< std::endl;
     }
     
-    /* *
-    std::cerr << std::endl;
-    for(auto i : MinMaxesMid){
-        std::cerr <<  i << std::endl;
-    }
-    std::cerr << std::endl << *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4) << std::endl;
-    /* */
     
     // calculate the scalar per the max point
     GLfloat scalar = SCREEN_SCALE / *std::max(MinMaxesMid.begin(), MinMaxesMid.end() - 4);
@@ -239,7 +231,6 @@ void PointCloud::centerVertices(std::vector<glm::vec3> & toCenter){
     for(auto & vertice : toCenter){
         vertice *= scalar;
     }
-    /**/
 }
 
 
@@ -249,7 +240,7 @@ void PointCloud::scale(GLfloat factor){
 }
 
 void PointCloud::translate(glm::vec3 direction){
-    model = glm::translate(model, direction);
+    model = glm::translate(glm::mat4(1), direction);
 }
 
 void printGLError(const char* msg){

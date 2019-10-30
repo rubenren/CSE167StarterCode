@@ -6,6 +6,7 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    bool lamp;
 };
 
 struct PointLight {
@@ -19,7 +20,7 @@ struct PointLight {
 };
 
 #define NR_POINT_LIGHTS 1
-#define NR_MATERIALS 3
+#define NR_MATERIALS 4
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
@@ -49,11 +50,13 @@ void main()
     vec3 result = vec3(0,0,0);
     
     // Point lights calculations
-    if(!normalColoring)
+    if(!normalColoring){
         for(int i = 0; i < NR_POINT_LIGHTS; i++)
             result += CalcPointLight(pointLights[i], norm, posOutput, viewDir);
-    else
+    }
+    else{
         result = normColor;
+    }
     // Use the color passed in. An alpha of 1.0f means it is not transparent.
     fragColor = vec4(result, sampleExtraOutput);
 }

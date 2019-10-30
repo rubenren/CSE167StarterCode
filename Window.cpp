@@ -15,6 +15,9 @@ PointCloud * Window::bear;
 PointCloud * Window::dragon;
 PointCloud * Window::lightSphere;
 
+bool temp = true;
+
+
 glm::mat4 Window::projection; // Projection matrix.
 
 int Window::activeMvmnt = 0;
@@ -89,21 +92,21 @@ bool Window::initializeObjects()
     
     // bunny material options
     bunny->ambience = glm::vec3(.01, .01, .01);
-    bunny->diffuse = glm::vec3(0.07568, 0.61424, 0.07568);
-    bunny->specular = glm::vec3(0.633, 0.727811, 0.633);
-    bunny->shininess = 0;
+    bunny->diffuse = glm::vec3(0.7568, 0.61424, 0.7568);
+    bunny->specular = glm::vec3(0.8,0.8,0.8);
+    bunny->shininess = 64;
     
     // dragon material options
     dragon->ambience = glm::vec3(.01, .01, .01);
     dragon->diffuse = glm::vec3(0.8, 0.8, 0.8);
     dragon->specular = glm::vec3(0.8, 0.8, 0.8);
-    dragon->shininess = .8;
+    dragon->shininess = 64;
     
     // bear material options
     bear->ambience = glm::vec3(.01, .01, .01);
     bear->diffuse = glm::vec3(0.0, 0.0, 0.0);
     bear->specular = glm::vec3(0.8, 0.8, 0.8);
-    bear->shininess = .8;
+    bear->shininess = 64;
     
     // lamp material options
     lightSphere->ambience = lightColor;
@@ -246,9 +249,14 @@ void Window::displayCallback(GLFWwindow* window)
         glUniform3f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->specular.x, temp.at(i)->specular.y, temp.at(i)->specular.z);
         holder = "material[" + std::to_string(i) + "].shininess";
         glUniform1f(glGetUniformLocation(program, holder.c_str()), temp.at(i)->shininess);
+        holder = "material[" + std::to_string(i) + "].lamp";
+        glUniform1i(glGetUniformLocation(program, holder.c_str()), 0);
     }
+    glUniform1i(glGetUniformLocation(program, "material[3].lamp"), 1);
     glCheckError();
     
+    
+    lightSphere->translate(lightPosition);
 	// Render the object.
 	currentObj->draw();
 //    lightSphere->draw();
@@ -267,9 +275,7 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
 	 * TODO: Modify below to add your key callbacks.
 	 */
 	
-	// Check for a key press.
-    bool temp = true;
-	if (action == GLFW_PRESS)
+	// Check for a key press.	if (action == GLFW_PRESS)
 	{
 		switch (key)
 		{

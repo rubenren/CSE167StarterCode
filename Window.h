@@ -21,6 +21,9 @@
 #include "Cube.h"
 #include "PointCloud.h"
 #include "shader.h"
+#include "Node.h"
+#include "Transform.hpp"
+#include "Geometry.hpp"
 
 class Window
 {
