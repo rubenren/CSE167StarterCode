@@ -11,12 +11,26 @@
 
 void centerVertices(std::vector<glm::vec3> & toCenter);
 
-void Geometry::draw(glm::mat4 C){
+void Geometry::draw(GLuint program, glm::mat4 C, FrustumG& cam){
     setModelMatrix(C);
-    
+    render(program);
 }
 
-void Geometry::render(){
+Geometry::Geometry(std::string objFile){
+    init(objFile);
+}
+
+Geometry::Geometry(){}
+
+void Geometry::update(glm::mat4 adjustment){
+    model = adjustment * model;
+}
+
+void Geometry::render(GLuint program){
+    
+    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniform3fv(glGetUniformLocation(program, "color"), 1, glm::value_ptr(color));
+    
     // Bind the VAO
     glBindVertexArray(vao);
     // Draw the points using triangles
@@ -34,15 +48,13 @@ void Geometry::init(std::string fileName){
         std::string temp;
         points.push_back(glm::vec3(0,0,0));
         norms.push_back(glm::vec3(0,0,0));
-        vertexIndicies.push_back(glm::ivec3(0,0,0));
-        normalIndicies.push_back(glm::ivec3(0,0,0));
-        textureIndicies.push_back(glm::ivec3(0,0,0));
         while(std::getline(objFile, lineAtATime)){
             std::stringstream ss;
             ss << lineAtATime;
             
             std::string label;
             ss >> label;
+            
             
             if(label == "v"){
                 glm::vec3 point;
@@ -68,7 +80,8 @@ void Geometry::init(std::string fileName){
                     previous = current+1;
                     current = temp.find("/",previous);
                     
-                    tIdx.x = stoi(temp.substr(previous,current - previous));
+                    if(previous != current)
+                        tIdx.x = stoi(temp.substr(previous,current - previous));
                     previous = current+1;
                     current = temp.size();
                     
@@ -83,7 +96,8 @@ void Geometry::init(std::string fileName){
                     previous = current+1;
                     current = temp.find("/",previous);
                     
-                    tIdx.y = stoi(temp.substr(previous,current - previous));
+                    if(previous != current)
+                        tIdx.y = stoi(temp.substr(previous,current - previous));
                     previous = current+1;
                     current = temp.size();
                     
@@ -98,15 +112,24 @@ void Geometry::init(std::string fileName){
                     previous = current+1;
                     current = temp.find("/",previous);
                     
-                    tIdx.z = stoi(temp.substr(previous,current - previous));
+                    if(previous != current)
+                        tIdx.z = stoi(temp.substr(previous,current - previous));
                     previous = current+1;
                     current = temp.size();
                     
                     nIdx.z = stoi(temp.substr(previous,current - previous));
                 }
-                vertexIndicies.push_back(vIdx);
-                textureIndicies.push_back(tIdx);
-                normalIndicies.push_back(nIdx);
+                vertexIndicies.push_back(vIdx.x);
+                vertexIndicies.push_back(vIdx.y);
+                vertexIndicies.push_back(vIdx.z);
+                
+                textureIndicies.push_back(tIdx.x);
+                textureIndicies.push_back(tIdx.y);
+                textureIndicies.push_back(tIdx.z);
+                
+                normalIndicies.push_back(nIdx.x);
+                normalIndicies.push_back(nIdx.y);
+                normalIndicies.push_back(nIdx.z);
             }
             
         }
@@ -119,7 +142,20 @@ void Geometry::init(std::string fileName){
     
     objFile.close();
     
-    centerVertices(points);
+//    centerVertices(points);
+
+    std::vector<glm::vec3> vertices_;
+    std::vector<glm::vec3> normals_;
+    std::vector<GLuint> indicies_;
+
+    for (unsigned i = 0; i < vertexIndicies.size(); i++) {
+      vertices_.push_back(points.at(vertexIndicies.at(i)));
+      normals_.push_back(norms.at(normalIndicies.at(i)));
+      indicies_.push_back(i);
+    }
+    
+    color = glm::vec3(1,1,1);
+    model = glm::mat4(1);
     
     // generate vertex array and buffer objects
     glGenVertexArrays(1, &vao);
@@ -131,7 +167,7 @@ void Geometry::init(std::string fileName){
     // Bind first VBO to bound VAO for data input. vertices for this one
     glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
     // Pass in the points
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * points.size(), points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices_.size(), vertices_.data(), GL_STATIC_DRAW);
     // Create channel for shader
     glEnableVertexAttribArray(0);
     // Tell shader how to read
@@ -139,7 +175,7 @@ void Geometry::init(std::string fileName){
     
     // Bind the second VBO now. For normals this time
     glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * norms.size(), norms.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals_.size(), normals_.data(), GL_STATIC_DRAW);
     // Creating different channel for shader
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
@@ -149,7 +185,7 @@ void Geometry::init(std::string fileName){
     // Bind this buffer to the VAO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     // Populate data
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(glm::ivec3) * vertexIndicies.size(), vertexIndicies.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indicies_.size(), indicies_.data(), GL_STATIC_DRAW);
     
     // Unbind the buffers
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -210,4 +246,8 @@ void centerVertices(std::vector<glm::vec3> & toCenter){
     for(auto & vertice : toCenter){
         vertice *= scalar;
     }
+}
+
+void Geometry::setModelMatrix(glm::mat4 newModel){
+    model = newModel;
 }

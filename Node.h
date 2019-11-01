@@ -16,18 +16,22 @@
 #endif
 
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+#include "debugger.hpp"
+#include "FrustumG.hpp"
 
 class Node {
 public:
-    virtual void draw(glm::mat4 C) = 0;
-    virtual void update() = 0;
+    virtual void draw(GLuint program, glm::mat4 C, FrustumG& cam) = 0;
+    virtual void update(glm::mat4 adjustment) = 0;
 };
 
 

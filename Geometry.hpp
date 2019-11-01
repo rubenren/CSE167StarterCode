@@ -17,9 +17,9 @@ class Geometry : public Node{
 protected:
     std::vector<glm::vec3> points;
     std::vector<glm::vec3> norms;
-    std::vector<glm::ivec3> vertexIndicies;
-    std::vector<glm::ivec3> normalIndicies;
-    std::vector<glm::ivec3> textureIndicies;
+    std::vector<GLuint> vertexIndicies;
+    std::vector<GLuint> normalIndicies;
+    std::vector<GLuint> textureIndicies;
     GLuint vao, ebo;
     GLuint vbos[2];
     GLfloat pointSize;
@@ -31,9 +31,12 @@ public:
     glm::mat4 getModel() { return model; }
     glm::vec3 getColor() { return color; }
     
-    void draw(glm::mat4 C);
-    void update();
-    void render();
+    Geometry(std::string);
+    Geometry();
+    
+    void draw(GLuint program, glm::mat4 C, FrustumG& cam);
+    void update(glm::mat4 adjustment);
+    void render(GLuint program);
     void init(std::string);
     void setModelMatrix(glm::mat4 newModel);
 };

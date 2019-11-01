@@ -19,10 +19,16 @@ protected:
     glm::mat4 M;
     std::list<Node*> children;
 public:
+    bool shouldRender = true;
+    bool boundingSet = false;
+    bool cullingActive = false;
+    glm::vec3 boundingCenter;
+    GLfloat radius;
     Transform(glm::mat4 newM);
-    void draw(glm::mat4 C);
-    void update();
+    void draw(GLuint program, glm::mat4 C, FrustumG& cam);
+    void update(glm::mat4 adjustment);
     void addChild(Node* newChild);
+    void setBoundingSphere(glm::vec3 center, GLfloat radius);
 };
 
 #endif /* Transform_hpp */
