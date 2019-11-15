@@ -27,6 +27,7 @@
 
 #include "debugger.hpp"
 #include "FrustumG.hpp"
+#include "stb_image.h"
 
 class Node {
 public:

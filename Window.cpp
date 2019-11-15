@@ -51,6 +51,7 @@ glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
 glm::mat4 Window::view = glm::lookAt(Window::eye, Window::center, Window::up);
 
 GLuint Window::program; // The shader program id.
+GLuint Window::skyProgram; // The shader for the sky box program id
 GLuint Window::lampS; // The lamps shader id.
 
 GLuint Window::projectionLoc; // Location of projection in shader.
@@ -58,15 +59,17 @@ GLuint Window::viewLoc; // Location of view in shader.
 GLuint Window::modelLoc; // Location of model in shader.
 GLuint Window::colorLoc; // Location of color in shader.
 
+
 bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
+    skyProgram = LoadShaders("shaders/skyShader.vert", "shaders/skyShader.frag");
     
 
 	// Check the shader program.
-	if (!program)
+	if (!program or !skyProgram)
 	{
-		std::cerr << "Failed to initialize shader program" << std::endl;
+		std::cerr << "Failed to initialize a shader program" << std::endl;
 		return false;
 	}
 
@@ -75,8 +78,8 @@ bool Window::initializeProgram() {
 	// Get the locations of uniform variables.
 	projectionLoc = glGetUniformLocation(program, "projection");
 	viewLoc = glGetUniformLocation(program, "view");
-	modelLoc = glGetUniformLocation(program, "model");
-	colorLoc = glGetUniformLocation(program, "color");
+//	modelLoc = glGetUniformLocation(program, "model");
+//	colorLoc = glGetUniformLocation(program, "color");
 
 	return true;
 }
@@ -91,7 +94,8 @@ bool Window::initializeObjects()
 	cube = new Cube(5.0f);
 	// Create a point cloud consisting of cube vertices.
     
-    // REMEMBER THIS IS NORMAL VIEWING MODE
+    
+    // REMEMBER THIS IS NORMAL VIEWING MODE 1 = ON
     glUniform1i(glGetUniformLocation(program, "normalColoring"), 1);
     
     // initialize the camera to keep track
@@ -112,7 +116,6 @@ bool Window::initializeObjects()
     lightSphere = new PointCloud(".\\res\\sphere.obj", 10);
     #endif
     satellite = new Transform(glm::mat4(1));
-    satelliteArmy = new Transform(glm::translate(glm::vec3(0,-5,0)));
     Transform * headMat = new Transform(glm::translate(glm::vec3(0,1.2,0)));
     Transform * leftArm = new Transform(glm::translate(glm::vec3(-1.2,0,0)));
     rightArm = new Transform(glm::translate(glm::vec3(1.2,0,0)));
@@ -167,25 +170,8 @@ bool Window::initializeObjects()
     satellite->setBoundingSphere(glm::vec3(0,0,0), 2.8f);
     
     
-    Transform * holder;
-    std::vector<Transform*> mySats;
-    for(int i = 0; i < 100; i++){
-        holder = new Transform(glm::mat4(1));
-        mySats.push_back(holder);
-    }
-    for(Transform * sat : mySats){
-        satelliteArmy->addChild(sat);
-        sat->addChild(satellite);
-    }
-    int tempCount = 0;
-    for(int i = -5; i < 5; i++){
-        for(int j = -5; j < 5; j++){
-            mySats.at(tempCount)->update(glm::translate(glm::vec3(i*5,0,j*5)));
-            tempCount++;
-        }
-    }
     
-	currentObj = satelliteArmy;
+	currentObj = satellite;
     glUniform1i(glGetUniformLocation(program, "matType"), 0);
 
 	return true;
@@ -374,6 +360,8 @@ void Window::displayCallback(GLFWwindow* window)
     glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), 0.09);
     glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), 0.01);
     
+    glCheckError();
+    
 	// Render the object.
 	currentObj->draw(program, glm::mat4(1), camera);
 //    lightSphere->draw();
@@ -490,6 +478,12 @@ glm::vec3 Window::trackBallMapping(glm::vec2 point){
     return v;
 }
 
+bool firstMouse = true;
+GLfloat pitch = 0;
+GLfloat yaw = 0;
+float lastX = 0;
+float lastY = 0;
+
 void Window::cursorCallback(GLFWwindow* window, double x, double y){
     glm::vec3 curPoint;
     glm::vec3 direction;
@@ -497,33 +491,95 @@ void Window::cursorCallback(GLFWwindow* window, double x, double y){
     glm::mat4 trans = glm::mat4(1.0f);
     GLfloat rotAngle;
     curPoint = trackBallMapping(glm::vec2(x,y));
+    glm::vec3 camPos = eye;
+    glm::vec3 camFront = center - eye;
+    glm::vec3 camUp = up;
+    float xoffset;
+    float yoffset;
     
+        
+    if(firstMouse){
+        lastX = x;
+        lastY = y;
+        firstMouse = false;
+    }
+    xoffset = x - lastX;
+    yoffset = lastY - y;
+    lastX = x;
+    lastY = y;
+
+    float sensitivity = 0.5;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw   += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+    
+    /**
+    std::cout << "yOffset:\t" << yoffset << std::endl << "pitch:\t" << pitch << std::endl << "yaw:\t" << yaw << std::endl;
+    std::cout << "xLook:\t" << center.x << " yLook:\t" << center.y << " zLook:\t" << center.z << std::endl;
+    std::cout << "xPos:\t" << eye.x << " yPos:\t" << eye.y << " zPos:\t" << eye.z << std::endl;
+    /**/
     if(activeMvmnt){
+        glm::vec3 front;
+        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = sin(glm::radians(pitch));
+        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        camFront = glm::normalize(front);
+        
+
+        
+        eye = camPos;
+        center = camPos + camFront;
+        up = camUp;
+        
+
+        
+        view = glm::lookAt(eye, center, up);
+
+        /**
+        float xOffset = (x - lastX) * (float)ROT_SCALE;
+        float yOffset = lastY - y;
+        lastX = x;
+        lastY = y;
+        
+        
         direction = curPoint - lastPoint;
         float velocity = glm::length(direction);
         if(velocity > .001){
             rotAxis = glm::cross(lastPoint, curPoint);
             rotAngle = velocity * ROT_SCALE;
             rotAxis = glm::normalize(rotAxis);
-            /**
             std::cout << rotAngle
                 << "\t(" << rotAxis.x
                 << ", " << rotAxis.y
                 << ", " << rotAxis.z
                 << ")\n";
-            */
+         
             // ensure that the cross product will not be zero
             if(rotAxis.length() != 0){
 //                view = glm::rotate(glm::radians(rotAngle), rotAxis) * view;
+                lookX = center.x;
+                lookZ = 0;
+                looky = 0;
                 center = center - direction * (float)ROT_SCALE;
                 camera.setCamDef(eye, center, up);
                 
                 view = glm::lookAt(eye, center, up);
             }
 //                currentObj->spin(rotAngle, rotAxis);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
+//            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
             
         }
+    /**/
+    }
+    else{
+        firstMouse = true;
     }
     
     lastPoint = curPoint;

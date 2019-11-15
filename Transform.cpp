@@ -15,7 +15,7 @@ Transform::Transform(glm::mat4 newM) : M(newM){
 
 void Transform::draw(GLuint program, glm::mat4 C, FrustumG& cam){
     if(boundingSet && cullingActive){
-        if(!cam.sphereCheck(boundingCenter, radius)){
+        if(cam.sphereCheck(M * glm::vec4(boundingCenter,1), radius)){
             shouldRender = true;
         }
         else{
@@ -40,7 +40,7 @@ void Transform::addChild(Node* newChild){
 }
 
 void Transform::setBoundingSphere(glm::vec3 position, GLfloat radius){
-    boundingCenter = M * glm::vec4(position,1);
+    boundingCenter = position;
     this->radius = radius;
     boundingSet = true;
 }

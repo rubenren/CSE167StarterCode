@@ -13,9 +13,9 @@
 
 
 FrustumG::FrustumG(glm::vec3 newEye, glm::vec3 newCenter, glm::vec3 newUp){
-    eye = newEye;
-    center = newCenter;
-    up = newUp;
+    this->eye = newEye;
+    this->center = newCenter;
+    this->up = newUp;
 }
 
 
@@ -25,28 +25,28 @@ bool FrustumG::sphereCheck(glm::vec3 position, GLfloat radius){
     glm::vec3 nc = eye + glm::normalize(eye - center) * nearDist;
     glm::vec3 fc = eye + glm::normalize(eye - center) * farDist;
     
-    /**
+    /**/
     for(auto face : faces){
         distance = glm::dot((position - eye), face);
         if(distance < radius){
-            std::cout << true << std::endl;
+            std::cout << distance << std::endl;
         }
         else{
-            std::cout << false << std::endl;
+            std::cout << distance << std::endl;
         }
     }
     
     distance = glm::dot((position - fc), normalBack);
     if(distance < radius)
-        std::cout << 1 << std::endl;
-    else std::cout << "0\n";
+        std::cout << "Back: " << distance << std::endl;
+    else std::cout << "false\n";
     
     distance = glm::dot((position - nc), normalFront);
     if(distance < radius)
-        std::cout << "1\n";
-    else std::cout << "0\n";
+        std::cout << "Front: " << distance << "\n";
+    else std::cout << "Front: " << distance << "(false)\n";
     
-    std::cout << std::endl;
+    std::cout << center.x << " " << center.y << " " << center.z << std::endl;
     /**/
     for(auto face : faces){
         distance = glm::dot((position - eye), face);
@@ -86,7 +86,7 @@ void FrustumG::setCamIntervals(GLfloat newFov, GLfloat newRatio, GLfloat newNear
     Wfar = Hfar * ratio;
     
     glm::vec3 d = glm::normalize(eye - center);
-    glm::vec3 right = glm::cross((eye - center), up);
+    glm::vec3 right = glm::cross(d, up);
     glm::vec3 nc = eye + d * nearDist;
     glm::vec3 fc = eye + d * farDist;
     glm::vec3 a = (nc + (right * Wnear) * .5f) - eye;
@@ -106,7 +106,7 @@ void FrustumG::setCamIntervals(GLfloat newFov, GLfloat newRatio, GLfloat newNear
     normalBottom = glm::cross(a,right);
     
     normalFront = -d;
-    normalBack = -d;
+    normalBack = d;
     
     faces.clear();
     faces.push_back(normalTop);
