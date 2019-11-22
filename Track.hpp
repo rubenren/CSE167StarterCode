@@ -32,6 +32,8 @@ public:
     
     void setBarRender(bool shouldI){ shouldRenderBars = shouldI; }
     
+    GLfloat getSlope(GLfloat t);
+    
     Track(std::vector<BezierCurve*> inputCurves);
     void replaceCurves(std::vector<BezierCurve*> inputCurves);
     void draw(GLuint program, glm::mat4 C, FrustumG& cam);

@@ -90,6 +90,7 @@ bool Window::initializeProgram() {
 Transform * Window::satellite;
 Transform * Window::satelliteArmy;
 FrustumG Window::camera(eye, center, up);
+glm::vec3 positionOfTrack(0,-.5,0);
 
 bool Window::initializeObjects()
 {
@@ -172,12 +173,9 @@ bool Window::initializeObjects()
     satellite->addChild(boundingSphere);
     satellite->setBoundingSphere(glm::vec3(0,0,0), 2.8f);
     /**/
-
-//    sphereGeo->scale(.2);
     
     std::vector<BezierCurve*> goingIn;
     std::vector<glm::vec3> tempPoints;
-    glm::vec3 positionOfTrack(0,-.5,0);
     glm::vec3 firstPt(0,positionOfTrack.y,positionOfTrack.z + 1);
     GLfloat hillAmp = .5f;
     glm::vec3 secondPt;
@@ -375,6 +373,7 @@ void Window::idleCallback()
 GLfloat beginTime = 0.f;
 GLfloat xInitial = 0.f;
 GLfloat speed = .1f;
+bool varVel = false;
 
 void Window::displayCallback(GLFWwindow* window)
 {	
@@ -402,7 +401,15 @@ void Window::displayCallback(GLFWwindow* window)
     beginTime = currentTime;
     GLfloat xFinal = speed * deltaTime + xInitial;
     if(xFinal >= 1.f) xFinal = 0.f;
+    if(xFinal < 0.f) xFinal = .99999f;
     xInitial = xFinal;
+    /**/
+    if(varVel){
+        glm::vec3 nextPoint = theTrack->getPoint(xFinal);
+        GLfloat slope = theTrack->getSlope(xFinal);
+        speed += (-.01f * slope)/glm::sqrt(1.f + slope*slope) - .001f * speed;
+    }
+    /**/
     sphereGeo->draw(program, glm::translate(theTrack->getPoint(xFinal)), camera, view);
 //    currentObj->draw(program, glm::mat4(1), camera);
     
@@ -452,6 +459,10 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
             case GLFW_KEY_ESCAPE:
                 // Close the window. This causes the program to also terminate.
                 glfwSetWindowShouldClose(window, GL_TRUE);
+                break;
+            case GLFW_KEY_V:
+                if(!varVel) varVel = true;
+                else varVel = false;
                 break;
             case GLFW_KEY_P:
                 if(speed >= .1f) speed = 0;

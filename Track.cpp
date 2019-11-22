@@ -8,9 +8,18 @@
 
 #include "Track.hpp"
 
+GLfloat Track::getSlope(GLfloat t){
+    glm::vec3 currentPos = getPoint(t);
+    glm::vec3 samplerPos = getPoint(t + .0001f);
+    GLfloat rise = samplerPos.y - currentPos.y;
+    GLfloat run = glm::sqrt(glm::pow(samplerPos.x - currentPos.x, 2) + glm::pow(samplerPos.z - currentPos.z, 2));
+    return rise / run;
+}
+
 glm::vec3 Track::getPoint(GLfloat t){
+    if(t >= 1.f) t = 0.f;
+    else if(t < 0.f) t = .9999f;
     GLfloat getThisOne = t * 8.f;
-    if(getThisOne >= 8.f) getThisOne = 0.f;
     GLuint slctr = int(getThisOne);
     getThisOne = getThisOne - GLfloat(slctr);
     return theCurves.at(slctr)->getPoint(getThisOne);
