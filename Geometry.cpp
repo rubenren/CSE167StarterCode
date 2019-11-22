@@ -28,13 +28,13 @@ void Geometry::update(glm::mat4 adjustment){
 
 void Geometry::render(GLuint program){
     
-    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniform3fv(glGetUniformLocation(program, "color"), 1, glm::value_ptr(color));
-    
+    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(getModel()));
+//    glUniform3fv(glGetUniformLocation(program, "color"), 1, glm::value_ptr(getColor()));
     // Bind the VAO
     glBindVertexArray(vao);
     // Draw the points using triangles
     glDrawElements(GL_TRIANGLES, 6 * vertexIndicies.size(), GL_UNSIGNED_INT, 0);
+    glCheckError();
     // Unbind the VAO
     glBindVertexArray(0);
 }

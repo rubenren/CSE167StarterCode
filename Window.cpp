@@ -16,7 +16,7 @@ Geometry * Window::limbGeo;
 Geometry * Window::antennaGeo;
 Geometry * Window::eyeGeo;
 Geometry * Window::bunnyGeo;
-Geometry * Window::sphereGeo;
+PointCloud * Window::sphereGeo;
 Transform * Window::rightLeg;
 Transform * Window::leftLeg;
 Transform * Window::rightArm;
@@ -24,6 +24,7 @@ Transform * Window::boundingSphere;
 PointCloud * Window::bear;
 PointCloud * Window::dragon;
 PointCloud * Window::lightSphere;
+Track * Window::theTrack;
 
 int Window::updateCounter = 0;
 
@@ -43,7 +44,7 @@ glm::vec3 Window::lastPoint = glm::vec3(0,0,0);
 glm::vec3 lightPosition = glm::vec3(5.0, 5.0, 5.0);
 glm::vec3 lightColor = glm::vec3(0.8,0.8,.8);
 
-glm::vec3 Window::eye(0, 0, 20); // Camera position.
+glm::vec3 Window::eye(0, 0, 5); // Camera position.
 glm::vec3 Window::center(0, 0, 0); // The point we are looking at.
 glm::vec3 Window::up(0, 1, 0); // The up direction of the camera.
 
@@ -52,6 +53,7 @@ glm::mat4 Window::view = glm::lookAt(Window::eye, Window::center, Window::up);
 
 GLuint Window::program; // The shader program id.
 GLuint Window::skyProgram; // The shader for the sky box program id
+GLuint Window::curveProgram;
 GLuint Window::lampS; // The lamps shader id.
 
 GLuint Window::projectionLoc; // Location of projection in shader.
@@ -64,10 +66,11 @@ bool Window::initializeProgram() {
 	// Create a shader program with a vertex shader and a fragment shader.
 	program = LoadShaders("shaders/shader.vert", "shaders/shader.frag");
     skyProgram = LoadShaders("shaders/skyShader.vert", "shaders/skyShader.frag");
+    curveProgram = LoadShaders("shaders/curveShader.vert", "shaders/curveShader.frag");
     
 
 	// Check the shader program.
-	if (!program or !skyProgram)
+	if (!program or !skyProgram or !curveProgram)
 	{
 		std::cerr << "Failed to initialize a shader program" << std::endl;
 		return false;
@@ -78,8 +81,8 @@ bool Window::initializeProgram() {
 	// Get the locations of uniform variables.
 	projectionLoc = glGetUniformLocation(program, "projection");
 	viewLoc = glGetUniformLocation(program, "view");
-//	modelLoc = glGetUniformLocation(program, "model");
-//	colorLoc = glGetUniformLocation(program, "color");
+	modelLoc = glGetUniformLocation(program, "model");
+	colorLoc = glGetUniformLocation(program, "color");
 
 	return true;
 }
@@ -91,31 +94,31 @@ FrustumG Window::camera(eye, center, up);
 bool Window::initializeObjects()
 {
 	// Create a cube of size 5.
-	cube = new Cube(5.0f);
+	cube = new Cube(500.0f);
 	// Create a point cloud consisting of cube vertices.
     
-    
-    // REMEMBER THIS IS NORMAL VIEWING MODE 1 = ON
-    glUniform1i(glGetUniformLocation(program, "normalColoring"), 1);
-    
+        
     // initialize the camera to keep track
     camera.setCamDef(eye, center, up);
 
     // Creates pointclouds of the OBJ files
     #ifdef __APPLE__
-//    bunnyGeo = new Geometry("res/bunny.obj");
+    /**
+    bunnyGeo = new Geometry("res/bunny.obj");
     bodyGeo = new Geometry("res/robot-parts-2018/body_s.obj");
     headGeo = new Geometry("res/robot-parts-2018/head_s.obj");
     limbGeo = new Geometry("res/robot-parts-2018/limb_s.obj");
     eyeGeo = new Geometry("res/robot-parts-2018/eyeball_s.obj");
     antennaGeo = new Geometry("res/robot-parts-2018/antenna_s.obj");
-    sphereGeo = new Geometry("res/sphere.obj");
+    /**/
+    sphereGeo = new PointCloud("res/sphere.obj",1);
     #else
     bear = new PointCloud(".\\res\\bear.obj", 10);
     dragon = new PointCloud(".\\res\\dragon.obj", 10);
     lightSphere = new PointCloud(".\\res\\sphere.obj", 10);
     #endif
     satellite = new Transform(glm::mat4(1));
+    /**
     Transform * headMat = new Transform(glm::translate(glm::vec3(0,1.2,0)));
     Transform * leftArm = new Transform(glm::translate(glm::vec3(-1.2,0,0)));
     rightArm = new Transform(glm::translate(glm::vec3(1.2,0,0)));
@@ -127,7 +130,7 @@ bool Window::initializeObjects()
     glm::mat4 antennaFix = glm::scale(glm::vec3(.33,.33,.33));
     antennaFix *= glm::rotate(glm::radians(30.f), glm::vec3(0,0,-1));
     Transform * rightAntenna = new Transform(glm::translate(glm::vec3(.2,2,0)) * antennaFix);
-    
+
     antennaFix = glm::scale(glm::vec3(.33,.33,.33));
     antennaFix *= glm::rotate(glm::radians(30.f), glm::vec3(0,0,1));
     Transform * leftAntenna = new Transform(glm::translate(glm::vec3(-.2,2,0)) * antennaFix);
@@ -168,11 +171,37 @@ bool Window::initializeObjects()
     boundingSphere->shouldRender = false;
     satellite->addChild(boundingSphere);
     satellite->setBoundingSphere(glm::vec3(0,0,0), 2.8f);
+    /**/
+
+//    sphereGeo->scale(.2);
     
+    std::vector<BezierCurve*> goingIn;
+    std::vector<glm::vec3> tempPoints;
+    glm::vec3 positionOfTrack(0,-.5,0);
+    glm::vec3 firstPt(0,positionOfTrack.y,positionOfTrack.z + 1);
+    GLfloat hillAmp = .5f;
+    glm::vec3 secondPt;
+    glm::vec3 thirdPt;
+    for(int i = 0; i < 8; i++){
+        tempPoints.clear();
+        tempPoints.push_back(firstPt);
+        
+        secondPt = glm::vec3(positionOfTrack.x + glm::sin(glm::radians(i * 45.f + 15.f)), positionOfTrack.y + hillAmp, positionOfTrack.z + glm::cos(glm::radians(i * 45.f + 15.f)));
+        tempPoints.push_back(secondPt);
+        
+        thirdPt = glm::vec3(positionOfTrack.x + glm::sin(glm::radians(i * 45.f + 30.f)), positionOfTrack.y - hillAmp, positionOfTrack.z + glm::cos(glm::radians(i * 45.f + 30.f)));
+        tempPoints.push_back(thirdPt);
+        
+        firstPt = glm::vec3(positionOfTrack.x + glm::sin(glm::radians(i * 45.f + 45.f)), positionOfTrack.y, positionOfTrack.z + glm::cos(glm::radians(i * 45.f + 45.f)));
+        tempPoints.push_back(firstPt);
+        
+        goingIn.push_back(new BezierCurve(tempPoints));
+    }
+    theTrack = new Track(goingIn);
     
+    satellite->addChild(sphereGeo);
     
 	currentObj = satellite;
-    glUniform1i(glGetUniformLocation(program, "matType"), 0);
 
 	return true;
 }
@@ -334,13 +363,18 @@ void Window::idleCallback()
     }
     limbRot = glm::translate(limbRot, glm::vec3(0,-1,0));
     limbRot2 = glm::translate(limbRot2, glm::vec3(0,-1,0));
-    
+    /**
     rightArm->update(limbRot);
     rightLeg->update(limbRot);
     leftLeg->update(limbRot2);
+     /**/
 	// Perform any updates as necessary. 
-	satellite->update(glm::mat4(1));
+//	satellite->update(glm::mat4(1));
 }
+
+GLfloat beginTime = 0.f;
+GLfloat xInitial = 0.f;
+GLfloat speed = .1f;
 
 void Window::displayCallback(GLFWwindow* window)
 {	
@@ -350,20 +384,50 @@ void Window::displayCallback(GLFWwindow* window)
 	// Specify the values of the uniform variables we are going to use.
 //	glm::mat4 model = currentObj->getModel();
 //	glm::vec3 color = currentObj->getColor();
+    glUseProgram(program);
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-//	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-//	glUniform3fv(colorLoc, 1, glm::value_ptr(color));
-    glUniform3f(glGetUniformLocation(program, "pointLights[0].position"), lightPosition.x, lightPosition.y, lightPosition.z);
-    glUniform3f(glGetUniformLocation(program, "pointLights[0].color"), lightColor.x,  lightColor.y,  lightColor.z);
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].constant"), 1.0f);
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), 0.09);
-    glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), 0.01);
+    glUniform3fv(glGetUniformLocation(program, "cameraPos"), 1, glm::value_ptr(eye));
+    
+    // REMEMBER THIS IS NORMAL VIEWING MODE 1 = ON
+//    glUniform1i(glGetUniformLocation(program, "normalColoring"), 1);
+//
+//    glUniform3f(glGetUniformLocation(program, "pointLights[0].position"), lightPosition.x, lightPosition.y, lightPosition.z);
+//    glUniform3f(glGetUniformLocation(program, "pointLights[0].color"), lightColor.x,  lightColor.y,  lightColor.z);
+//    glUniform1f(glGetUniformLocation(program, "pointLights[0].constant"), 1.0f);
+//    glUniform1f(glGetUniformLocation(program, "pointLights[0].linear"), 0.09);
+//    glUniform1f(glGetUniformLocation(program, "pointLights[0].quadratic"), 0.01);
+    GLfloat currentTime = glfwGetTime();
+    GLfloat deltaTime = currentTime - beginTime;
+    beginTime = currentTime;
+    GLfloat xFinal = speed * deltaTime + xInitial;
+    if(xFinal >= 1.f) xFinal = 0.f;
+    xInitial = xFinal;
+    sphereGeo->draw(program, glm::translate(theTrack->getPoint(xFinal)), camera, view);
+//    currentObj->draw(program, glm::mat4(1), camera);
+    
     
     glCheckError();
     
-	// Render the object.
-	currentObj->draw(program, glm::mat4(1), camera);
+    glUseProgram(curveProgram);
+    
+    glUniformMatrix4fv(glGetUniformLocation(curveProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(curveProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    
+    theTrack->draw(curveProgram, glm::mat4(1), camera);
+    
+    glCheckError();
+    
+    glUseProgram(skyProgram);
+    
+    glUniformMatrix4fv(glGetUniformLocation(skyProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glm::mat4 skyView = glm::mat4(glm::mat3(view));
+    glUniformMatrix4fv(glGetUniformLocation(skyProgram, "model"), 1, GL_FALSE, glm::value_ptr(cube->getModel()));
+    glUniformMatrix4fv(glGetUniformLocation(skyProgram, "view"), 1, GL_FALSE, glm::value_ptr(skyView));
+    
+    // Render the object.
+    cube->draw();
+    
 //    lightSphere->draw();
     
     glCheckError();
@@ -389,32 +453,32 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                 // Close the window. This causes the program to also terminate.
                 glfwSetWindowShouldClose(window, GL_TRUE);
                 break;
-            case GLFW_KEY_1:
-                // Set currentObj to cube
-//                currentObj = cube;
-                break;
-            case GLFW_KEY_2:
-                // Set currentObj to cubePoints
-//                currentObj = cubePoints;
-                break;
-            case GLFW_KEY_F1:
-//                currentObj = bunnyGeo;
-                glUniform1i(glGetUniformLocation(program, "matType"), 0);
-                break;
-            case GLFW_KEY_F2:
-//                currentObj = dragon;
-                glUniform1i(glGetUniformLocation(program, "matType"), 1);
-                break;
-            case GLFW_KEY_F3:
-//                currentObj = bear;
-                glUniform1i(glGetUniformLocation(program, "matType"), 2);
-                break;
             case GLFW_KEY_P:
+                if(speed >= .1f) speed = 0;
+                else speed = .1f;
+                break;
+            case GLFW_KEY_X:
                 if(mods == GLFW_MOD_SHIFT){
-//                    currentObj->updatePointSize(1);
+                    theTrack->adjustSelected(1, -.2f);
                 }
                 else {
-//                    currentObj->updatePointSize(-1);
+                    theTrack->adjustSelected(1, .2f);
+                }
+                break;
+            case GLFW_KEY_Y:
+                if(mods == GLFW_MOD_SHIFT){
+                    theTrack->adjustSelected(2, -.2f);
+                }
+                else {
+                    theTrack->adjustSelected(2, .2f);
+                }
+                break;
+            case GLFW_KEY_Z:
+                if(mods == GLFW_MOD_SHIFT){
+                    theTrack->adjustSelected(3, -.2f);
+                }
+                else {
+                    theTrack->adjustSelected(3, .2f);
                 }
                 break;
             case GLFW_KEY_N:
@@ -445,15 +509,35 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                     satellite->cullingActive = true;
                 }
                 break;
+            case GLFW_KEY_W:
+                eye = glm::vec3(eye.x + .2f, eye.y, eye.z);
+                view = glm::lookAt(eye, center, up);
+                break;
+            case GLFW_KEY_A:
+                eye = glm::vec3(eye.x, eye.y, eye.z - .2f);
+                view = glm::lookAt(eye, center, up);
+                break;
+            case GLFW_KEY_S:
+                eye = glm::vec3(eye.x - .2f, eye.y, eye.z);
+                view = glm::lookAt(eye, center, up);
+                break;
             case GLFW_KEY_D:
-                if(demoToggle){
-                    demoToggle = false;
-                    projection = glm::perspective(fov + .6f, ratio, nearDist, farDist);
-                }
-                else{
-                    demoToggle = true;
-                    projection = glm::perspective(fov, ratio, nearDist, farDist);
-                }
+                eye = glm::vec3(eye.x, eye.y, eye.z + .2f);
+                view = glm::lookAt(eye, center, up);
+                break;
+            case GLFW_KEY_E:
+                eye = glm::vec3(eye.x, eye.y + .2f, eye.z);
+                view = glm::lookAt(eye, center, up);
+                break;
+            case GLFW_KEY_Q:
+                eye = glm::vec3(eye.x, eye.y - .2f, eye.z);
+                view = glm::lookAt(eye, center, up);
+                break;
+            case GLFW_KEY_RIGHT:
+                theTrack->nextSelect();
+                break;
+            case GLFW_KEY_LEFT:
+                theTrack->prevSelect();
                 break;
             default:
                 break;

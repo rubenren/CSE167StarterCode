@@ -6,11 +6,12 @@
 //  Copyright © 2019 Ruben Renteria. All rights reserved.
 //
 
+
 #ifndef Node_h
 #define Node_h
 
 #ifdef __APPLE__
-#include <OpenGL/gl3.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glew.h>
 #endif
@@ -28,6 +29,7 @@
 #include "debugger.hpp"
 #include "FrustumG.hpp"
 #include "stb_image.h"
+
 
 class Node {
 public:

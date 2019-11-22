@@ -2,7 +2,7 @@
 #define _OBJECT_H_
 
 #ifdef __APPLE__
-#include <OpenGL/gl3.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glew.h>
 #endif
@@ -10,6 +10,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
+#include <iostream>
+#include "stb_image.h"
+#include "debugger.hpp"
 
 class Object
 {

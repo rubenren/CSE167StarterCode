@@ -4,7 +4,7 @@
 
 #ifdef __APPLE__
 #define GLFW_INCLUDE_GLCOREARB
-#include <OpenGL/gl3.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glew.h>
 #endif
@@ -17,13 +17,13 @@
 #include <vector>
 #include <memory>
 
-#include "Object.h"
 #include "Cube.h"
 #include "PointCloud.h"
 #include "shader.h"
 #include "Node.h"
 #include "Transform.hpp"
 #include "Geometry.hpp"
+#include "Track.hpp"
 
 class Window
 {
@@ -38,7 +38,7 @@ public:
     static Geometry * limbGeo;
     static Geometry * eyeGeo;
     static Geometry * antennaGeo;
-    static Geometry * sphereGeo;
+    static PointCloud * sphereGeo;
     static Transform * rightLeg;
     static Transform * leftLeg;
     static Transform * rightArm;
@@ -57,10 +57,11 @@ public:
 	static glm::mat4 projection;
 	static glm::mat4 view;
 	static glm::vec3 eye, center, up;
-	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc, lampS, skyProgram;
+	static GLuint program, projectionLoc, viewLoc, modelLoc, colorLoc, lampS, skyProgram, curveProgram;
     static GLfloat fov, ratio, nearDist, farDist, Hnear, Wnear, Hfar, Wfar;
     static glm::vec3 normalTop, normalBottom, normalRight, normalLeft, normalFront, normalBack;
-
+    static Track * theTrack;
+    
 	static bool initializeProgram();
 	static bool initializeObjects();
 	static void cleanUp();

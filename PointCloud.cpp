@@ -1,6 +1,6 @@
 #include "PointCloud.h"
 
-#define SCREEN_SCALE 5
+#define SCREEN_SCALE .25
 
 
 PointCloud::PointCloud(std::string objFilename, GLfloat pointSize) 
@@ -68,7 +68,7 @@ PointCloud::PointCloud(std::string objFilename, GLfloat pointSize)
     centerVertices(points);
 
 	// Set the model matrix to an identity matrix. 
-	model = glm::mat4(1);
+    model = glm::mat4(1);
 	// Set the color. 
 	color = glm::vec3(1, 0, 0);
 
@@ -129,9 +129,17 @@ PointCloud::~PointCloud()
 	glDeleteVertexArrays(1, &vao);
 }
 
-void PointCloud::draw()
+//extern unsigned int cubemapTexture;
+
+void PointCloud::draw(GLuint program, glm::mat4 C, FrustumG& cam)
 {
- 
+    
+    setModel(C);
+
+    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+//    glUniform3fv(glGetUniformLocation(program, "color"), 1, glm::value_ptr(color));
+    
+//    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glBindVertexArray(vao);
     
     glCheckError();
@@ -141,6 +149,8 @@ void PointCloud::draw()
     glCheckError();
     
     glBindVertexArray(0);
+    
+//    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     
     glCheckError();
     
@@ -156,8 +166,27 @@ void PointCloud::draw()
     /**/
 }
 
-void PointCloud::update()
+void PointCloud::draw(GLuint program, glm::mat4 C, FrustumG& cam, glm::mat4 inView){
+    
+    setModel(C);
+
+    glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(inView));
+    
+    glBindVertexArray(vao);
+    
+    glCheckError();
+    
+    glDrawElements(GL_TRIANGLES, 6 * faceIs.size(), GL_UNSIGNED_INT, 0);
+    
+    glCheckError();
+    
+    glBindVertexArray(0);
+}
+
+void PointCloud::update(glm::mat4 newM)
 {
+//    model = newM;
 	// Spin the cube by 1 degree.
 	// spin(0.1f);
 }
@@ -240,7 +269,7 @@ void PointCloud::scale(GLfloat factor){
 }
 
 void PointCloud::translate(glm::vec3 direction){
-    model = glm::translate(glm::mat4(1), direction);
+    model = glm::translate(model, direction);
 }
 
 void printGLError(const char* msg){

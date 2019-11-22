@@ -2,16 +2,18 @@
 #define _CUBE_H_
 
 #ifdef __APPLE__
-#include <OpenGL/gl3.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glew.h>
 #endif
 
+#pragma once
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <vector>
 
 #include "Object.h"
+
 
 class Cube : public Object
 {
@@ -32,6 +34,8 @@ public:
     void translate(glm::vec3 direction);
     
 };
+
+
 
 #endif
 

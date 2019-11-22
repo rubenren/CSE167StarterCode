@@ -21,7 +21,7 @@ protected:
     std::vector<GLuint> normalIndicies;
     std::vector<GLuint> textureIndicies;
     GLuint vao, ebo;
-    GLuint vbos[2];
+    GLuint vbos[4];
     GLfloat pointSize;
     glm::mat4 model;
     glm::vec3 color;

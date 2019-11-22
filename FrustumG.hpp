@@ -10,7 +10,7 @@
 #define FrustumG_hpp
 
 #ifdef __APPLE__
-#include <OpenGL/gl3.h>
+#include <OpenGL/OpenGL.h>
 #else
 #include <GL/glew.h>
 #endif
@@ -34,6 +34,7 @@ class FrustumG {
     glm::vec3 normalTop, normalBottom, normalRight, normalLeft, normalFront, normalBack;
     std::vector<glm::vec3> faces;
     
+    glm::vec3 getEye(){return eye;}
     
     void setCamIntervals(GLfloat newFov, GLfloat newRatio, GLfloat newNearDist, GLfloat newFarDist);
     
