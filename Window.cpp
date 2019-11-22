@@ -374,6 +374,7 @@ GLfloat beginTime = 0.f;
 GLfloat xInitial = 0.f;
 GLfloat speed = .1f;
 bool varVel = false;
+bool friction = false;
 
 void Window::displayCallback(GLFWwindow* window)
 {	
@@ -407,7 +408,12 @@ void Window::displayCallback(GLFWwindow* window)
     if(varVel){
         glm::vec3 nextPoint = theTrack->getPoint(xFinal);
         GLfloat slope = theTrack->getSlope(xFinal);
-        speed += (-.01f * slope)/glm::sqrt(1.f + slope*slope) - .001f * speed;
+        if(!friction)
+            speed = (-.01f * slope)/glm::sqrt(1.f + slope*slope) + .9995f * speed;
+        else{
+            speed = (-.01f * slope)/glm::sqrt(1.f + slope*slope) + .995f * speed;
+            if(theTrack->checkBoosted(xFinal)) speed += .08f;
+        }
     }
     /**/
     sphereGeo->draw(program, glm::translate(theTrack->getPoint(xFinal)), camera, view);
@@ -460,9 +466,22 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
                 // Close the window. This causes the program to also terminate.
                 glfwSetWindowShouldClose(window, GL_TRUE);
                 break;
+            case GLFW_KEY_F:
+                if(!friction){
+                    friction = true;
+                    theTrack->toggleBoosted(0);
+                }
+                else{
+                    friction = false;
+                    theTrack->toggleBoosted(0);
+                }
+                break;
             case GLFW_KEY_V:
                 if(!varVel) varVel = true;
-                else varVel = false;
+                else {
+                    speed = .2f;
+                    varVel = false;
+                }
                 break;
             case GLFW_KEY_P:
                 if(speed >= .1f) speed = 0;

@@ -20,6 +20,7 @@ protected:
     std::vector<BezierCurve*> theCurves;
     std::vector<glm::vec3> themBars;
     bool shouldRenderBars = true;
+    bool isThereFriction = false;
     GLuint selector = 0;
     
 public:
@@ -30,9 +31,13 @@ public:
     
     glm::vec3 getPoint(GLfloat t);
     
+    bool checkBoosted(GLfloat t);
+    
     void setBarRender(bool shouldI){ shouldRenderBars = shouldI; }
     
     GLfloat getSlope(GLfloat t);
+    
+    void toggleBoosted(unsigned int idx);
     
     Track(std::vector<BezierCurve*> inputCurves);
     void replaceCurves(std::vector<BezierCurve*> inputCurves);

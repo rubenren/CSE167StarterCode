@@ -19,12 +19,15 @@ protected:
     std::vector<glm::ivec2> indicies;
     GLuint selected;
     GLuint vaos[4];
+    bool isBoosted = false;
     
 public:
+    bool getBoostedState(){ return isBoosted; }
+    void setBoosted(bool incoming){ isBoosted = incoming; }
     BezierCurve(std::vector<glm::vec3> newPoints);
     glm::vec3 getPoint(GLfloat t);
     void setCntrlPnts(std::vector<glm::vec3> inPts);
-    std::vector<glm::vec3> getCntrlPnts(){return cntrlPnts;}
+    std::vector<glm::vec3> getCntrlPnts(){ return cntrlPnts; }
     void update(GLuint idx, glm::vec3 adjustment);
     void draw(GLuint program, glm::mat4 C, FrustumG& cam);
     void extracted(GLfloat &factor, GLfloat increment, unsigned int sampleNum);

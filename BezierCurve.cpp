@@ -68,6 +68,7 @@ void BezierCurve::draw(GLuint program, glm::mat4 C, FrustumG& cam){
     setModelMatrix(C);
         
     glUniform3fv(glGetUniformLocation(program, "inColor"), 1, glm::value_ptr(color));
+    if(isBoosted) glUniform3fv(glGetUniformLocation(program, "inColor"), 1, glm::value_ptr(glm::vec3(0,0,0.8f)));
     glCheckError();
     glUniformMatrix4fv(glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glCheckError();

@@ -8,6 +8,29 @@
 
 #include "Track.hpp"
 
+GLfloat wrapper(GLfloat inputF){
+    if(inputF >= 1.f) inputF = 0.f;
+    else if(inputF < 0.f) inputF = .9999f;
+    return inputF;
+}
+
+bool Track::checkBoosted(GLfloat t){
+    t = wrapper(t);
+    GLfloat getThisOne = t * 8.f;
+    return theCurves.at(int(getThisOne))->getBoostedState();
+}
+
+void Track::toggleBoosted(unsigned int idx){
+    if(!isThereFriction){
+        isThereFriction = true;
+        theCurves.at(idx)->setBoosted(true);
+    }
+    else{
+        isThereFriction = false;
+        theCurves.at(idx)->setBoosted(false);
+    }
+}
+
 GLfloat Track::getSlope(GLfloat t){
     glm::vec3 currentPos = getPoint(t);
     glm::vec3 samplerPos = getPoint(t + .0001f);
@@ -17,8 +40,7 @@ GLfloat Track::getSlope(GLfloat t){
 }
 
 glm::vec3 Track::getPoint(GLfloat t){
-    if(t >= 1.f) t = 0.f;
-    else if(t < 0.f) t = .9999f;
+    t = wrapper(t);
     GLfloat getThisOne = t * 8.f;
     GLuint slctr = int(getThisOne);
     getThisOne = getThisOne - GLfloat(slctr);
